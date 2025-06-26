@@ -38,6 +38,25 @@ def greet_user(hour) :
     else:
         speak("Good evening, Sir")
 
+def search_command(command):
+    query = command.replace("search","").split()[0]
+    keyboard.press_and_release("ctrl+l")
+    keyboard.write(query)
+    pyautogui.sleep(0.5)
+    keyboard.press_and_release("enter")
+
+def play_song_command(command):
+    os.system("start spotify")
+    pyautogui.sleep(5)
+    query = command.replace("play song","").strip()
+    keyboard.press_and_release("ctrl+k")
+    pyautogui.sleep(1)
+    keyboard.write(query)
+    pyautogui.sleep(2)
+    keyboard.press_and_release("enter")
+
+
+
 
 hour = datetime.datetime.now().hour
 
@@ -138,14 +157,18 @@ while True:
     elif "new tab" in user :
         pyautogui.hotkey('ctrl','n')   
 
-    elif "close tab" or "close current tab" in user :
-        pyautogui.hotkey('ctrl','w')
     
     elif "close all tab" in user :
         pyautogui.hotkey('ctrl','shift','w')
     
-    elif "close window" or "close current window" in user :
+    elif "close window" in user or "close current window" in user :
         keyboard.send("alt+tab")
+
+    if "search" in user:
+        search_command(user)
+    
+    if "play song" in user:
+        play_song_command(user)
 
 
     if "exit" in user :
