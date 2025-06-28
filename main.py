@@ -5,6 +5,12 @@ import os
 import keyboard
 import pyautogui
 import datetime
+import psutil
+from pycaw.pycaw import AudioUtilities, IAudioEndpointVolume
+from ctypes import cast, POINTER
+from comtypes import CLSCTX_ALL
+import screen_brightness_control as sbc
+
 
 engine = pyttsx3.init()
 
@@ -55,12 +61,29 @@ def play_song_command(command):
     pyautogui.sleep(2)
     keyboard.press_and_release("enter")
 
+def is_wifi_enable() :
+    interfaces = psutil.net_if_stats()
+    
+    if 'Wi-Fi' in interfaces :
+        return interfaces['Wi-Fi'].isup
+    else :
+        return False
+
+devices = AudioUtilities.GetSpeakers()  
+interface = devices.Activate(IAudioEndpointVolume._iid_, CLSCTX_ALL, None)
+volume = cast(interface, POINTER(IAudioEndpointVolume))
+def set_volume(level): 
+    volume.SetMasterVolumeLevelScalar(level / 100, None)
+
+def get_current_volume():
+    current = volume.GetMasterVolumeLevelScalar()  
+    return round(current * 100)
+
 
 
 
 hour = datetime.datetime.now().hour
 
-# speak("Hello, my name is Jarvis. I am your personal assistant. How can I help you today?")
 greet_user(hour)
 
 speak("I am jarvis AI, How can i help you ...")
@@ -136,8 +159,6 @@ while True:
         pyautogui.press('win')
 
 
-
-
     # if "minimize window" in user :
     #     pyautogui.hotkey('win','down')
     
@@ -145,11 +166,8 @@ while True:
     #     pyautogui.hotkey('win','up')
 
 
-    if "switch window" in user :
-        pyautogui.hotkey('alt','tab')  
-
-    elif "enter" in user :
-        keyboard.press('enter') 
+    elif "switch window" in user :
+        pyautogui.hotkey('alt','tab')   
     
     elif "Focus on search bar" in user:
         pyautogui.hotkey('ctrl','l')  
@@ -157,20 +175,85 @@ while True:
     elif "new tab" in user :
         pyautogui.hotkey('ctrl','n')   
 
-    
     elif "close all tab" in user :
         pyautogui.hotkey('ctrl','shift','w')
     
     elif "close window" in user or "close current window" in user :
         keyboard.send("alt+tab")
 
-    if "search" in user:
+    elif "zoom in" in user :
+        pyautogui.hotkey('ctrl','+')  
+
+    elif "zoom out" in user :
+        pyautogui.hotkey('ctrl','-')  
+    
+    elif "open quick settings" in user :
+        pyautogui.hotkey('win','a') 
+
+    elif "on wi-fi" in user :
+        if is_wifi_enable() :
+            speak("wi-fi is already enabled")
+        else :
+            pyautogui.hotkey('win','a')
+            pyautogui.sleep(0.1)
+            pyautogui.press('enter')
+
+    elif "off wi-fi" in user:
+        if is_wifi_enable() :
+            pyautogui.hotkey('win','a')
+            pyautogui.sleep(0.1)
+            pyautogui.press('enter')
+        else :
+            speak("wi-fi is already disabled")
+
+    elif "on bluetooth" in user or "off bluetooth" in user :
+        pyautogui.hotkey('win','a')
+        pyautogui.sleep(0.1)
+        pyautogui.press('right')
+        pyautogui.sleep(0.1)
+        pyautogui.press('enter')
+        pyautogui.sleep(0.1)
+        pyautogui.hotkey('win','a')
+
+    elif "set volume to" in user :
+        query = user.split()[3]
+        set_volume(int(query))
+
+    elif "increase volume" in user :
+        current_volume = get_current_volume()
+        new_volume = min(current_volume + 10, 100)  # increase by 10%, max is 100
+        set_volume(new_volume)
+
+    elif "decrease volume" in user :
+        current_volume = get_current_volume()
+        new_volume = min(current_volume - 10, 100)  # increase by 10%, max is 100
+        set_volume(new_volume)
+
+    elif "set brightness to" in user :
+        query = user.split()[3]
+        sbc.set_brightness(query)
+    
+    elif "increase brightness" in user :
+        sbc.set_brightness('+10')
+
+    elif "decrease brightness" in user :
+        sbc.set_brightness('-10')
+
+    elif "click" in user:
+        pyautogui.click()
+        speak("Mouse clicked.")
+
+    elif "enter" in user :
+        keyboard.press('enter')
+
+    elif "search" in user:
         search_command(user)
     
-    if "play song" in user:
+    elif "play song" in user:
         play_song_command(user)
 
 
-    if "exit" in user :
+    elif "exit" in user :
         speak("Shutting down.")
         exit()
+
